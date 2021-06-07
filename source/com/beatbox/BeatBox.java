@@ -10,7 +10,7 @@ import java.awt.*;
 public class BeatBox {
    private JFrame theFrame;
    private JPanel mainPanel;
-   private JList incomingList;
+   private JList<String> incomingList;
    private JTextField userMessage;
    private ArrayList<JCheckBox> checkBoxList;   
 
@@ -43,8 +43,8 @@ public class BeatBox {
    public void startUp(String name) {
       this.userName = name;
       try (var sock= new Socket("127.0.0.1", 4242);) {
-         out= new ObjectOutputStream(sock.getOutputStream());
-         in= new ObjectInputStream(sock.getInputStream());
+         this.out= new ObjectOutputStream(sock.getOutputStream());
+         this.in= new ObjectInputStream(sock.getInputStream());
         
          /*Thread remote= new Thread(new RemoteReader());
             remote.start();
@@ -90,11 +90,35 @@ public class BeatBox {
        this.userMessage= new JTextField();
        buttonBox.add(userMessage);
 
-       JList incomingList= new JList();
-       incomingList.addListSelectionListener(new MyListSelectionLister());
-       incomingList.setSelectionMode(ListSelectionModel.SINGLE_SELECTION );
-       JScrollPane listScroller= new JScrollPane(incomingList);
-       
+       this.incomingList= new JList();
+       this.incomingList.addListSelectionListener(new MyListSelectionLister());
+       this.incomingList.setSelectionMode(ListSelectionModel.SINGLE_SELECTION );
+       var theList= new JScrollPane(incomingList);
+       buttonBox.add(theList);
 
+       this.incomingList.setListData(this.listVector);
+
+       var nameBox= new Box(BoxLayout.Y_AXIS);
+       for (var i = 0; i < 16; i++) {
+          nameBox.add(new Label(this.instrumentsNames[i]));
+       }
+
+       background.add(BorderLayout.EAST, buttonBox);
+       background.add(BorderLayout.WEST, nameBox);
+
+       theFrame.getContentPane().add(background);
+       var grid= new GridLayout(16,16);
+       grid.setVgap(1);
+       grid.setHgap(2);
+
+       this.mainPanel= new JPanel(grid);
+       background.add(BorderLayout.CENTER, mainPanel);
+
+       for (var i = 0; i < 256; i++) {
+          var c= new JCheckBox();
+          c.setSelected(false);
+          this.checkBoxList.add(c);
+          mainPanel.add(c);
+       }
    }
 }
