@@ -50,11 +50,9 @@ public class BeatBox {
             remote.start();
          */
       } catch (Exception e) { System.out.println("Couldn't connect You will have to play alone !"); }  
-
-      /*
-        setUpMidi();
-        buildGUI();
-      */
+      
+      setUpMIDI();
+      buildGUI();  
    }
 
    public void buildGUI() {
@@ -90,7 +88,7 @@ public class BeatBox {
        this.userMessage= new JTextField();
        buttonBox.add(userMessage);
 
-       this.incomingList= new JList();
+       this.incomingList= new JList<String>();
        this.incomingList.addListSelectionListener(new MyListSelectionLister());
        this.incomingList.setSelectionMode(ListSelectionModel.SINGLE_SELECTION );
        var theList= new JScrollPane(incomingList);
@@ -99,7 +97,7 @@ public class BeatBox {
        this.incomingList.setListData(this.listVector);
 
        var nameBox= new Box(BoxLayout.Y_AXIS);
-       for (var i = 0; i < 16; i++) {
+       for (var i = 0; i < this.instruments.length; i++) {
           nameBox.add(new Label(this.instrumentsNames[i]));
        }
 
@@ -120,5 +118,24 @@ public class BeatBox {
           this.checkBoxList.add(c);
           mainPanel.add(c);
        }
+
+       this.theFrame.setBounds(50, 50, 300, 300);
+       this.theFrame.pack();
+       this.theFrame.setVisible(true);
+   }
+
+   public void setUpMIDI() {
+      try {
+         this.sequencer= MidiSystem.getSequencer();
+         this.sequencer.open();
+         this.sequence= new Sequence(Sequence.PPQ, 4);
+         
+         this.track= this.sequence.createTrack();
+         this.sequencer.setTempoInBPM(120);
+      } catch (Exception e) { 
+         e.printStackTrace(); 
+      } finally {
+         this.sequencer.close();
+      }
    }
 }
