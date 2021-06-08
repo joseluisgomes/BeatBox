@@ -6,6 +6,7 @@ import java.util.*;
 import javax.sound.midi.*;
 import javax.swing.*;
 import java.awt.*;
+import java.awt.event.*;
 
 public class BeatBox {
    private JFrame theFrame;
@@ -132,10 +133,85 @@ public class BeatBox {
          
          this.track= this.sequence.createTrack();
          this.sequencer.setTempoInBPM(120);
-      } catch (Exception e) { 
-         e.printStackTrace(); 
-      } finally {
-         this.sequencer.close();
+      } catch (Exception e) { e.printStackTrace(); } 
+      finally { this.sequencer.close(); } 
+   }
+
+   public void buildTrackAndStart() {
+      ArrayList<Integer> trackList= null;
+      this.sequence.deleteTrack(this.track);
+      this.track= this.sequence.createTrack();
+
+      /*
+         Build a track by walking through the checkboxes to get their state,
+         and mapping that to an instrument (and making the MidiEvent for it)
+      */
+      for (var i = 0; i < this.instruments.length; i++) { 
+         trackList= new ArrayList<>();
+
+         for (var j = 0; j < 16; j++) { //Loop through the 16 columns of the line 'i'
+            JCheckBox jc= checkBoxList.get(j + (16*i));
+
+            if (jc.isSelected()) {
+               trackList.add(this.instruments[i]);
+            } else {
+               trackList.add(null); //Because this slot should be empty in the track
+            }
+         }
+         //makeTracks(trackList);
+      }
+      //this.track.add(makeEvent(192,9,1,0,15));
+      try {
+         this.sequencer.setSequence(this.sequence);
+         this.sequencer.setLoopCount(Sequencer.LOOP_CONTINUOUSLY);
+         this.sequencer.start();
+         this.sequencer.setTempoInBPM(120);
+      } catch (Exception e) { e.printStackTrace(); }
+   }
+
+   public class MyStartListener implements ActionListener {
+      @Override
+      public void actionPerformed(ActionEvent e) { buildTrackAndStart(); }
+   }
+   public class MyStopActionListener implements ActionListener {
+      @Override
+      public void actionPerformed(ActionEvent e) { sequencer.stop(); }
+   }
+   public class MyUpTempoListener implements ActionListener {
+      @Override
+      public void actionPerformed(ActionEvent e) {
+         float tempoFactor= sequencer.getTempoFactor();
+         sequencer.setTempoFactor((float) (tempoFactor * 1.03));
+      }
+   }
+   public class MyDownTempoListener implements ActionListener {
+      @Override
+      public void actionPerformed(ActionEvent e) {
+         float tempoFactor= sequencer.getTempoFactor();
+         sequencer.setTempoFactor((float) (tempoFactor * .97));
+      }
+   }
+
+   public class MySendListener implements ActionListener {
+      @Override
+      public void actionPerformed(ActionEvent e) {
+         //make an arraylist of just the STATE of the checkboxes
+         var checkboxState= new boolean[256];
+         for (var i = 0; i < 256; i++) {
+            JCheckBox jc= checkBoxList.get(i);
+
+            if (jc.isSelected()) {
+               checkboxState[i]= true;
+            }
+         }
+
+         String messageToSend= null;
+         try {
+            out.writeObject(userName + nextNumb++ +": " + userMessage.getText());
+            out.writeObject(checkboxState);
+         } catch (Exception ex) {
+            System.out.println("Sorry dude. Could not send it to the server !");
+         }
       }
    }
 }
