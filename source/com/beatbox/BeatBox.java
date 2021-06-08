@@ -5,6 +5,7 @@ import java.net.Socket;
 import java.util.*;
 import javax.sound.midi.*;
 import javax.swing.*;
+import javax.swing.event.*;
 import java.awt.*;
 import java.awt.event.*;
 
@@ -173,10 +174,12 @@ public class BeatBox {
       @Override
       public void actionPerformed(ActionEvent e) { buildTrackAndStart(); }
    }
+
    public class MyStopActionListener implements ActionListener {
       @Override
       public void actionPerformed(ActionEvent e) { sequencer.stop(); }
    }
+   
    public class MyUpTempoListener implements ActionListener {
       @Override
       public void actionPerformed(ActionEvent e) {
@@ -212,6 +215,23 @@ public class BeatBox {
          } catch (Exception ex) {
             System.out.println("Sorry dude. Could not send it to the server !");
          }
+      }
+   }
+
+   public class MyListSelectionLister implements ListSelectionListener {
+      @Override
+      public void valueChanged(ListSelectionEvent le) {
+          if (!le.getValueIsAdjusting()) {
+             String selected= incomingList.getSelectedValue();
+
+             if (selected != null) {
+                //Now go to the map, and change the sequence
+                boolean[] selectedState= otherSeqsMap.get(selected);
+                //changeSequence(selectedState);
+                sequencer.stop();
+                //buildTrackAndStart();
+             }
+          }
       }
    }
 }
