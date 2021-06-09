@@ -3,6 +3,7 @@ package source.com.beatbox;
 import java.io.*;
 import java.net.Socket;
 import java.util.*;
+import java.util.List;
 import javax.sound.midi.*;
 import javax.swing.*;
 import javax.swing.event.*;
@@ -48,9 +49,9 @@ public class BeatBox {
          this.out= new ObjectOutputStream(sock.getOutputStream());
          this.in= new ObjectInputStream(sock.getInputStream());
         
-         /*Thread remote= new Thread(new RemoteReader());
-            remote.start();
-         */
+         var remote= new Thread(new RemoteReader());
+         remote.start();
+         
       } catch (Exception e) { System.out.println("Couldn't connect You will have to play alone !"); }  
       
       setUpMIDI();
@@ -168,6 +169,7 @@ public class BeatBox {
          this.sequencer.start();
          this.sequencer.setTempoInBPM(120);
       } catch (Exception e) { e.printStackTrace(); }
+      finally { this.sequencer.close(); }
    }
 
    public class MyStartListener implements ActionListener {
@@ -187,6 +189,7 @@ public class BeatBox {
          sequencer.setTempoFactor((float) (tempoFactor * 1.03));
       }
    }
+
    public class MyDownTempoListener implements ActionListener {
       @Override
       public void actionPerformed(ActionEvent e) {
@@ -227,11 +230,76 @@ public class BeatBox {
              if (selected != null) {
                 //Now go to the map, and change the sequence
                 boolean[] selectedState= otherSeqsMap.get(selected);
-                //changeSequence(selectedState);
+                changeSequence(selectedState);
                 sequencer.stop();
                 //buildTrackAndStart();
              }
           }
       }
+   }
+
+   public class RemoteReader implements Runnable {
+      boolean[] checkboxState= null;
+      String nameToShow= null;
+      Object obj= null;
+
+      @Override
+      public void run() {
+         try {
+            while ((obj= in.readObject()) != null) {
+               System.out.println("Got an object from the server");
+               System.out.println(obj.getClass());
+
+               nameToShow= (String) obj;
+               checkboxState= (boolean[]) obj;
+               otherSeqsMap.put(nameToShow, checkboxState);
+               listVector.add(nameToShow);
+               incomingList.setListData(listVector);
+            }
+         } catch (Exception e) { e.printStackTrace(); }
+      }
+   }
+
+   public class MyPlayMineListener implements ActionListener {
+      @Override
+      public void actionPerformed(ActionEvent e) {
+         if (mySequence != null) {
+            sequence= mySequence; //Restore to my original
+         }
+      }
+   }
+
+   public void changeSequence(boolean[] checkboxState) {
+      for (var i = 0; i < 256; i++) {
+         JCheckBox check= checkBoxList.get(i);
+
+         check.setSelected(checkboxState[i]);
+      }
+   }
+
+   public void makeTracks(List<Integer> list) {
+      var i= list.iterator();
+
+      while (i.hasNext()) {
+         Integer num= i.next();
+
+         if (num != null) {
+            int numkey= num.intValue();
+            //track.add(makeEvent(144, 9, numKey, 100, i));
+            //track.add(makeEvent(128, 9, numKey, 100, i+1));
+         }
+      }
+   }
+
+   public MidiEvent makeEvent(int comd, int chan, int one, int two, int tick) {
+      MidiEvent event= null;
+      
+      try {
+         var shortMessage= new ShortMessage();
+         shortMessage.setMessage(comd, chan, one, two);
+         event= new MidiEvent(shortMessage, tick);
+         } catch (Exception e) { e.printStackTrace(); }
+
+         return event;
    }
 }
