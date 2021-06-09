@@ -4,6 +4,8 @@ import java.io.*;
 import java.net.Socket;
 import java.util.*;
 import java.util.List;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import javax.sound.midi.*;
 import javax.swing.*;
 import javax.swing.event.*;
@@ -40,7 +42,7 @@ public class BeatBox {
     }
 
    public static void main(String[] args) {
-       
+       new BeatBox().startUp(args[0]); //args[0] is the user ID/Screen name
    }
 
    public void startUp(String name) {
@@ -52,7 +54,11 @@ public class BeatBox {
          var remote= new Thread(new RemoteReader());
          remote.start();
          
-      } catch (Exception e) { System.out.println("Couldn't connect You will have to play alone !"); }  
+      } catch (Exception e) { 
+         var logger= Logger.getLogger(BeatBox.class.getName());
+         var logMessage= "Couldn't connect You will have to play alone !";
+         logger.log(Level.INFO, logMessage);
+      }  
       
       setUpMIDI();
       buildGUI();  
@@ -91,7 +97,7 @@ public class BeatBox {
        this.userMessage= new JTextField();
        buttonBox.add(userMessage);
 
-       this.incomingList= new JList<String>();
+       this.incomingList= new JList<>();
        this.incomingList.addListSelectionListener(new MyListSelectionLister());
        this.incomingList.setSelectionMode(ListSelectionModel.SINGLE_SELECTION );
        var theList= new JScrollPane(incomingList);
@@ -160,9 +166,9 @@ public class BeatBox {
                trackList.add(null); //Because this slot should be empty in the track
             }
          }
-         //makeTracks(trackList);
+         makeTracks(trackList);
       }
-      //this.track.add(makeEvent(192,9,1,0,15));
+      this.track.add(makeEvent(192,9,1,0,15));
       try {
          this.sequencer.setSequence(this.sequence);
          this.sequencer.setLoopCount(Sequencer.LOOP_CONTINUOUSLY);
@@ -211,13 +217,15 @@ public class BeatBox {
             }
          }
 
-         String messageToSend= null;
          try {
             out.writeObject(userName + nextNumb++ +": " + userMessage.getText());
             out.writeObject(checkboxState);
          } catch (Exception ex) {
-            System.out.println("Sorry dude. Could not send it to the server !");
+            var logger= Logger.getLogger(BeatBox.class.getName());
+            var logMessage= "Sorry dude. Could not send it to the server !";
+            logger.log(Level.INFO, logMessage);
          }
+         userMessage.setText("");
       }
    }
 
@@ -232,7 +240,7 @@ public class BeatBox {
                 boolean[] selectedState= otherSeqsMap.get(selected);
                 changeSequence(selectedState);
                 sequencer.stop();
-                //buildTrackAndStart();
+                buildTrackAndStart();
              }
           }
       }
@@ -247,8 +255,12 @@ public class BeatBox {
       public void run() {
          try {
             while ((obj= in.readObject()) != null) {
-               System.out.println("Got an object from the server");
-               System.out.println(obj.getClass());
+               var logger= Logger.getLogger(BeatBox.class.getName());
+               var logMessage= "Got an object from the server";
+               logger.log(Level.INFO, logMessage);
+               
+               var logMessage2= obj.getClass().toString();
+               logger.log(Level.INFO, logMessage2);
 
                nameToShow= (String) obj;
                checkboxState= (boolean[]) obj;
@@ -278,15 +290,15 @@ public class BeatBox {
    }
 
    public void makeTracks(List<Integer> list) {
-      var i= list.iterator();
-
-      while (i.hasNext()) {
-         Integer num= i.next();
+      var it= list.iterator();
+      
+      for (var i = 0; i < instruments.length; i++) {
+         Integer num= it.next();
 
          if (num != null) {
-            int numkey= num.intValue();
-            //track.add(makeEvent(144, 9, numKey, 100, i));
-            //track.add(makeEvent(128, 9, numKey, 100, i+1));
+            var numkey= num.intValue();
+            track.add(makeEvent(144, 9, numkey, 100, i));
+            track.add(makeEvent(128, 9, numkey, 100, i+1));
          }
       }
    }
@@ -299,7 +311,6 @@ public class BeatBox {
          shortMessage.setMessage(comd, chan, one, two);
          event= new MidiEvent(shortMessage, tick);
          } catch (Exception e) { e.printStackTrace(); }
-
          return event;
    }
 }
