@@ -42,7 +42,11 @@ public class BeatBox {
     }
 
    public static void main(String[] args) {
-       new BeatBox().startUp(args[0]); //args[0] is the user ID/Screen name
+      if (args.length != 1) {
+         throw new IllegalArgumentException("You have to pass your ID in order to play the app!");
+      } else {
+         new BeatBox().startUp(args[0]);
+      }
    }
 
    public void startUp(String name) {
