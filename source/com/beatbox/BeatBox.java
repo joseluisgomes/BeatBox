@@ -78,7 +78,7 @@ public class BeatBox {
        this.checkBoxList= new ArrayList<>();
        var buttonBox= new Box(BoxLayout.Y_AXIS);
 
-       var start= new JButton("Stop");
+       var start= new JButton("Start");
        start.addActionListener(new MyStartListener());
        buttonBox.add(start);
 
