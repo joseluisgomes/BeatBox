@@ -1,4 +1,4 @@
-package source.com.beatbox;
+package com.beatbox;
 
 import java.io.*;
 import java.net.Socket;
